@@ -1,0 +1,493 @@
+---
+title: "Women's Political Empowerment in Taiwan"
+author: "Vivian"
+date: "115-1"
+format:
+  dashboard:
+    theme: flatly
+editor: visual
+execute:
+  echo: false
+  warning: false
+  message: false
+---
+
+```{r}
+#| echo: false
+#| results: hide
+#| warning: false
+#| message: false
+#| show_col_types: false
+
+library(tidyverse)
+library(skimr)
+library(readxl)
+library(janitor)
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+
+
+WPE = read_csv("C:/Users/user/Documents/dsml/data/key-features-of-womens-political-empowerment.csv")
+
+# Use to check code: 
+WPE = clean_names(WPE)
+# head(WPE[,1:7
+#])
+
+# Remove selected entities (don't exist after 1950) 
+
+entity_to_remove <- c(
+  "Duchy of Nassau",
+  "Hanover",
+  "Oldenburg",
+  "Piedmont-Sardinia",
+  "Saxe-Weimar-Eisenach",
+  "Saxony",
+  "Wurttemburg"
+)
+
+
+#limit the year from 1950 to 1990
+WPE_country_clean <- WPE %>%
+  filter(
+    !entity %in% entity_to_remove,
+    year >= 1950,
+    year <= 2025
+  )
+
+
+
+#Rename Congo to Republic of Congo.
+WPE_country_clean <- WPE_country_clean %>%
+  mutate(
+    entity = recode(
+      entity,
+      "Congo" = "Republic of Congo",
+    )
+  )
+
+#Remove 'code' of countries
+WPE_country_clean <- WPE_country_clean %>%
+  select(entity,year, womens_political_empowerment_overall, womens_civil_liberties, womens_civil_society_participation, womens_political_participation)
+```
+
+## Taiwan v.s. Top 3 Asian Countries {.tabset}
+
+### Political Empowerment Overall {width="75%"}
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+
+WPE_top_asia <- WPE_country_clean %>%
+  filter(
+    entity %in% c(
+      "Taiwan",
+      "South Korea",
+      "Japan",
+      "Philippines"
+    ),
+    year >= 1950,
+    year <= 2025
+  )
+
+WPE_top_asia <- WPE_top_asia %>%
+  mutate(
+    entity = factor(   #factor --> categorical variables 
+      entity,
+      levels = c(       #levels --> list of possible answers for categorical variables
+        "Taiwan",
+        "South Korea",
+        "Japan",
+        "Philippines"
+      )
+    )
+  )
+
+ggplot(
+  WPE_top_asia,
+  aes(x = year, y = womens_political_empowerment_overall, color = entity)                  #aes() --> aesthetic mappings
+) +
+  geom_line(linewidth = 1) +
+  geom_text(
+    data = WPE_top_asia %>% filter(year == 2025),
+    aes(label = entity),
+    hjust = -0.1,          #horizontal justification
+    size = 3,
+    show.legend = FALSE
+  ) +
+  scale_color_manual(
+    values = c(
+      "Taiwan" = "firebrick",
+      "South Korea" = "#00008B",
+      "Japan" = "#00CD00", 
+      "Philippines" = "#FF7F24"
+    ),
+    labels = c(
+      "Taiwan",
+      "South Korea",
+      "Japan",
+      "Philippines"
+    )
+  ) +
+  scale_x_continuous(
+    breaks = seq(1950, 2025, by = 5),
+    limits = c(1950, 2035)
+  ) +
+  labs(
+    title = "Women's Political Empowerment: Taiwan v.s. Top 3 Asian Countries",
+    x = "Year",
+    y = "Overall Political Empowerment Score",
+    color = "Country"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold"),
+    legend.position = "bottom"
+  )
+```
+
+::: {.card width="25%"}
+Women's political empowerment incorporates three equally-weighted dimensions:
+
+- Fundamental civil liberties
+
+- Women's open discussion of political issues and participation in civil society organizations
+
+- The representation of women in formal political positions.
+
+- In 2025, women's political empowerment overall:
+
+  - Taiwan: 0.903
+
+  - South Korea: 0.878
+
+  - Japan: 0.844
+
+  - Philippines: 0.810
+
+This and the following graphs use data from Our World in Data, Women's Political Empowerment Index, which is produced by Varieties of Democracy (V-Dem). The index ranges from 0 to 1. It is made up of three sub-indices: [women's civil liberties](https://ourworldindata.org/grapher/women-civil-liberties-index), [women's civil society participation](https://ourworldindata.org/grapher/women-civil-society-participation-index), and [women's political participation](https://ourworldindata.org/grapher/women-political-participation-index).
+:::
+
+### Civil Liberties
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+ggplot(
+  WPE_top_asia,
+  aes(x = year, y = womens_civil_liberties, color = entity)
+) +
+  geom_line(linewidth = 1) +
+  scale_color_manual(
+    values = c(
+      "Taiwan" = "firebrick",
+      "South Korea" = "#00008B",
+      "Japan" = "#00CD00", 
+      "Philippines" = "#FF7F24"
+    ),
+    labels = c(
+      "Taiwan",
+      "South Korea",
+      "Japan",
+      "Philippines"
+    )
+  ) +
+  scale_x_continuous(
+    breaks = seq(1950, 2025, by = 5),
+    limits = c(1950, 2025)
+  ) +
+  labs(
+    title = "Women's Civil Liberties",
+    x = "Year",
+    y = "Women's Civil Liberties Score",
+    color = "Country"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold"),
+    legend.position = "bottom"
+  )
+```
+
+::: {.card width="25%"}
+Civil liberties measures if women have the ability to make meaningful decisions in key areas of their lives. It includes:
+
+- Freedom of domestic movement
+
+- The right to private property
+
+- Freedom from forced labor
+
+- Access to justice.
+
+2025:
+
+- Japan = 0.927
+
+- South Korea= 0.926
+
+- Taiwan = 0.925
+
+- Philippines = 0.702
+:::
+
+### Civil Society Participation
+
+```{r}
+ggplot(
+  WPE_top_asia,
+  aes(x = year, y = womens_civil_society_participation, color = entity)
+) +
+  geom_line(linewidth = 1) +
+    geom_text(
+      data = WPE_top_asia %>% filter(year == 2025),
+      aes(label = entity),
+      hjust = -0.1,
+      size = 3,
+      show.legend = FALSE
+    ) +
+  scale_color_manual(
+    values = c(
+      "Taiwan" = "firebrick",
+      "South Korea" = "#00008B",
+      "Japan" = "#00CD00", 
+      "Philippines" = "#FF7F24"
+    ),
+    labels = c(
+      "Taiwan",
+      "South Korea",
+      "Japan",
+      "Philippines"
+    )
+  ) +
+  scale_x_continuous(
+    breaks = seq(1950, 2025, by = 5),
+    limits = c(1950, 2035)
+  ) +
+  labs(
+    title = "Women's Civil Society Participation: Taiwan v.s. Top 3 Asian Countries",
+    x = "Year",
+    y = "Women's Civil Society Participation Score",
+    color = "Country"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold"),
+    legend.position = "bottom"
+  )
+```
+
+::: {.card width="25%"}
+Civil society participation asks if women have the **ability to express themselves** and to **form and participate in groups.** It includes:
+
+- Open discussion of political issues
+
+- Participation in civil society organizations
+
+- Representation in the ranks of journalists
+
+2025:
+
+- Taiwan = 0.824
+
+- South Korea = 0.812
+
+- Philippines = 0.788
+
+- Japan = 0.715
+:::
+
+### Political Participation
+
+```{r}
+ggplot(
+  WPE_top_asia,
+  aes(x = year, y = womens_political_participation, color = entity)
+) +
+  geom_line(linewidth = 1) +
+  geom_text(
+    data = WPE_top_asia %>% filter(year == 2025),
+    aes(label = entity),
+    hjust = -0.1,
+    size = 4,
+    show.legend = FALSE
+  ) +
+  scale_color_manual(
+    values = c(
+      "Taiwan" = "firebrick",
+      "South Korea" = "#00008B",
+      "Japan" = "#00CD00", 
+      "Philippines" = "#FF7F24"
+    ),
+    labels = c(
+      "Taiwan",
+      "South Korea",
+      "Japan",
+      "Philippines"
+    )
+  ) +
+  scale_x_continuous(
+    breaks = seq(1950, 2025, by = 5),
+    limits = c(1950, 2035)
+  ) +
+  labs(
+    title = "Women's Political Participation: Taiwan v.s. Top 3 Asian Countries",
+    x = "Year",
+    y = "Women's Political Participation Score",
+    color = "Country"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold"),
+    legend.position = "bottom"
+  )
+```
+
+::: {.card width="25%"}
+Political participation asks if women are descriptively represented in formal political positions. It includes:
+
+- Women's descriptive representation in the legislature
+
+- An equal share in the overall distribution of power.
+
+2025:
+
+- Taiwan = 0.995
+
+- Philippines = 0.967
+
+- South Korea = 0.918
+
+- Japan = 0.912
+:::
+
+### Analysis
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+library(tidyverse) 
+library(skimr)
+library(broom)
+library(modelr)
+```
+
+```{r}
+#| echo: false
+#| warning: false
+#| message: false
+#| include: false
+
+WPE_regression <- WPE_country_clean %>%
+  select(
+    entity,
+    year,
+    womens_civil_liberties,
+    womens_civil_society_participation,
+    womens_political_participation
+  ) %>%
+  drop_na()
+
+model <- lm(
+  womens_political_participation ~
+    womens_civil_liberties +
+    womens_civil_society_participation,
+  data = WPE_regression
+)
+
+summary(model)
+broom::tidy(model)
+
+
+WPE_augmented <- broom::augment(    #augment adds columns to your original dataset
+  model,
+  data = WPE_regression
+)
+
+WPE_augmented %>%
+  select(
+    entity,
+    year,
+    .fitted,
+    .resid
+  ) %>%
+  head()
+
+
+
+# Residuals versus fitted values
+plot(
+  WPE_augmented$.fitted,
+  WPE_augmented$.resid,
+  xlab = "Fitted Values",
+  ylab = "Residuals",
+  main = "Residuals vs. Fitted Values"
+)
+abline(h = 0, lty = 2) #adds horizontal dash line at y = 0
+
+# Normal Q-Q plot
+qqnorm(WPE_augmented$.resid)
+qqline(WPE_augmented$.resid)
+
+```
+
+::: {.card width="50%"}
+**Coefficients**
+
+|                             | Estimate  | Std. Error | t value | **Pr(\>\|t\|)** |
+|---------------------|-------------|-------------|-------------|-------------|
+| Intercept                   | 0.203698  | 0.003672   | 55.48   | \< 2e-16        |
+| Civil Liberties             | -0.234405 | 0.008757   | -26.77  | \< 2e-16        |
+| Civil Society Participation | 1.029186  | 0.010016   | 102.75  | \< 2e-16        |
+
+- Residual standard error: 0.1884 on 14168 degrees of freedom
+
+- Multiple R-squared: 0.5576
+
+- Adjusted R-squared: 0.5575
+
+- F-statistic: 8929 on 2 and 14168 DF
+
+- p-value: \< 2.2e-16
+
+**Analysis**
+
+The p-value \< 2.2e-16, so the probability of getting results at least as extreme is low. Therefore, we reject the null hypothesis. –\> It is **statistically significant**.
+
+There is a **positive** correlation between [women's political participation]{.underline} and [civil society participation]{.underline}. Countries where women are more involved in civil society tend to also have more representation in formal political positions.
+
+However, there is a **negative** correlation between [women's political participation]{.underline} and [civil liberties]{.underline} when civil society participation is taken into account. This result could be caused by differences between countries.
+
+**Possible Explanations for Taiwan Being an Asian Outlier**
+
+1.  The early adoption and gradual expansion of gender quota mechanisms. (CEIAS)
+    - Explicit gender quotas in the 1946 Constitution of the Republic of China
+    - Gradually broadened during the 1990s and early 2000s
+    - Continuous reforms: Nov. 2025, amendment to Local Government Act (will take effect in 2030)
+      - Raised the quota –\> 1 out of 4 to 1out of 3 seats must be for a woman
+      - New gender-neutral formulation –\> 1 seat for a woman, 1 seat for a man, 1 seat unrestricted
+2.  Key players taking advantage of the political climate
+    - In 1987, martial law was lifted –\> allowed Taiwanese feminists to push for their own rights
+    - **Annette Lu (呂秀蓮):** Taiwan's post-war pioneer feminist
+      - Authored *New Feminism* in the 1970s
+      - Called for revision of gender-biased family laws
+      - Critiqued Confucian patriarchy
+      - Elected to represent Taoyuan in the Legislative Yuan
+      - Became Taiwan’s first female vice president in 2000
+    - **Chen Chu (陳菊)**: the first woman to join the inner circle of Taiwan's Democracy Movement during the martial law era (1949 - 1987)
+      - 1979 Kaohsiung Incident: one of two women among the eight staffers court-martialed
+      - 1986: Co-founded the Democratic Progressive Party (DPP)
+
+References:
+
+1.  [Women's Political Empowerment Index, 2025](https://ourworldindata.org/grapher/women-political-empowerment-index)
+
+2.  [A quiet reform with big consequences: How Taiwan is reshaping women’s representation in local politics - CEIAS](https://ceias.eu/a-quiet-reform-with-big-consequences-how-taiwan-is-reshaping-womens-representation-in-local-politics/)
+
+3.  <https://asiacentre.eu/wp-content/uploads/2024/06/Asia-Sparks-Female-Power-in-Taiwanese-Politics.pdf>
+:::

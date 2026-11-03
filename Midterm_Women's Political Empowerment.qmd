@@ -1,0 +1,696 @@
+---
+title: "Midterm Data_Women's Political Empowerment"
+format: html
+editor: visual
+---
+
+# 1. Select and Clean Data
+
+### Load packages and data
+
+```{r}
+#| echo: true
+#| warning: false
+library(tidyverse)
+library(skimr)
+library(readxl)
+library(janitor)
+library(tidyr)
+library(dplyr)
+library(ggiraph)
+
+WPE = read_csv("C:/Users/user/Documents/dsml/data/key-features-of-womens-political-empowerment.csv")
+```
+
+```{r}
+WPE = clean_names(WPE)
+head(WPE[,1:7
+])
+```
+
+### Check rows and columns
+
+```{r}
+#| echo: true
+nrow(WPE)
+ncol(WPE)
+
+names(WPE)
+```
+
+### Remove data
+
+```{r}
+
+# Remove selected entities (don't exist after 1950) 
+
+entity_to_remove <- c(
+  "Duchy of Nassau",
+  "Hanover",
+  "Oldenburg",
+  "Piedmont-Sardinia",
+  "Saxe-Weimar-Eisenach",
+  "Saxony",
+  "Wurttemburg"
+)
+
+
+#limit the year from 1950 to 1990
+WPE_country_clean <- WPE %>%
+  filter(
+    !entity %in% entity_to_remove,
+    year >= 1950,
+    year <= 2025
+  )
+
+
+
+#Rename Congo to Republic of Congo.
+WPE_country_clean <- WPE_country_clean %>%
+  mutate(
+    entity = recode(
+      entity,
+      "Congo" = "Republic of Congo",
+    )
+  )
+
+#Remove 'code' of countries
+WPE_country_clean <- WPE_country_clean %>%
+  select(entity,year, womens_political_empowerment_overall, womens_civil_liberties, womens_civil_society_participation, womens_political_participation)
+
+View(WPE_country_clean)
+```
+
+```{r}
+#double-checking
+names(WPE_country_clean)
+WPE_country_clean %>%
+  distinct(entity) %>%
+  arrange(entity) %>%
+  View()
+```
+
+### Check for missing values in cleaned data
+
+```{r}
+colSums(is.na(WPE_country_clean))
+WPE_country_clean %>%
+  filter(if_any(everything(), is.na)) %>%
+  View()
+
+#after viewing, the missing data will not interfere with the final graph, so we do not remove
+```
+
+Missing Values:
+
+- Bangladesh 1950 - 1968:
+
+  - *NA:* womens_civil_liberties (19)
+
+  - *NA*: womens_political_participation (19)
+
+- Barbados 1951 - 1965:
+
+  - *NA:* womens_civil_liberties (15)
+
+  - *NA*: womens_political_participation (15)
+
+- Central African Republic 1964, 1965:
+
+  - *NA:* womens_civil_liberties (2)
+
+  - *NA*: womens_political_participation (2)
+
+.....
+
+# 2. Visualization World vs Taiwan
+
+## 1) Women's Overall Political Empowerment_Taiwan v.s. World
+
+### Step 1: Prepare data (WPE_plot)
+
+```{r}
+library(dplyr)
+library(ggplot2)
+
+WPE_plot <- WPE_country_clean %>%
+  filter(
+    entity %in% c("World", "Taiwan"),
+    year >= 1950,
+    year <= 2025
+  )
+```
+
+### Step 2: Line graph
+
+```{r}
+ggplot(WPE_plot, aes(x = year, y = womens_political_empowerment_overall, color = entity)) +
+  geom_line(linewidth = 1) +
+  scale_color_manual(
+    values = c(
+      "World" = "steelblue",
+      "Taiwan" = "firebrick"
+    )
+  ) +
+  scale_x_continuous(
+    breaks = seq(1950, 2025, by = 5),
+    limits = c(1950, 2025)
+  ) +
+  labs(
+    title = "Women's Political Empowerment: World vs. Taiwan",
+    x = "Year",
+    y = "Women's Overall Political Empowerment Score",
+    color = "Region"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold"),
+    legend.position = "bottom"
+  )
+```
+
+## 2) Women's Civil Society Participation_Taiwan v.s. World
+
+```{r}
+ggplot(
+  WPE_plot,
+  aes(x = year, y = `womens_civil_society_participation`,
+      color = entity)
+) +
+  geom_line(linewidth = 1) +
+  scale_color_manual(
+    values = c("World" = "steelblue",
+               "Taiwan" = "firebrick")
+  ) +
+  scale_x_continuous(
+    breaks = seq(1950, 2025, by = 5),
+    limits = c(1950, 2025)
+  ) +
+  labs(
+    title = "Women's Civil Society Participation: Taiwan vs. World",
+    x = "Year",
+    y = "Civil Society Participation Score",
+    color = "Region"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold"),
+    legend.position = "bottom"
+  )
+```
+
+## 3) Women's Civil Liberties_Taiwan v.s. World
+
+```{r}
+ggplot(
+  WPE_plot,
+  aes(x = year, y = `womens_civil_liberties`,
+      color = entity)
+) +
+  geom_line(linewidth = 1) +
+  scale_color_manual(
+    values = c("World" = "steelblue",
+               "Taiwan" = "firebrick")
+  ) +
+  scale_x_continuous(
+    breaks = seq(1950, 2025, by = 5),
+    limits = c(1950, 2025)
+  ) +
+  labs(
+    title = "Women's Civil Liberties: Taiwan vs. World",
+    x = "Year",
+    y = "Civil Liberties Score",
+    color = "Region"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold"),
+    legend.position = "bottom"
+  )
+```
+
+## 4) Women's Political Participation_Taiwan v.s. World
+
+```{r}
+ggplot(
+  WPE_plot,
+  aes(x = year, y = `womens_political_participation`,
+      color = entity)
+) +
+  geom_line(linewidth = 1) +
+  scale_color_manual(
+    values = c("World" = "steelblue",
+               "Taiwan" = "firebrick")
+  ) +
+  scale_x_continuous(
+    breaks = seq(1950, 2025, by = 5),
+    limits = c(1950, 2025)
+  ) +
+  labs(
+    title = "Women's Political Participation: Taiwan vs. World",
+    x = "Year",
+    y = "Political Participation Score",
+    color = "Region"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold"),
+    legend.position = "bottom"
+  )
+```
+
+# 3. Plots_Continents Comparison
+
+```{r}
+#| echo: false
+#| message: false
+#| warning: false
+#| title: Women's Overall Political Empowerment 
+#| fig-width: 15
+#| fig-height: 8
+
+continents <- c(
+  "Africa",
+  "Asia",
+  "Europe",
+  "North America",
+  "South America",
+  "Oceania"
+)
+
+WPE_continents <- WPE_country_clean %>%
+  filter(
+    entity %in% continents,
+    year >= 1950,
+    year <= 2025
+  )
+
+
+
+ggplot(
+  WPE_continents,
+  aes(x = year, y = womens_political_empowerment_overall, color = entity)
+) +
+  geom_line(linewidth = 1) +
+  geom_text(
+    data = WPE_continents %>% filter(year == 2025),
+    aes(label = entity),
+    hjust = -0.1,
+    size = 5,
+    show.legend = FALSE
+  ) +
+  scale_color_discrete(
+    labels = c(
+      "Africa",
+      "Asia",
+      "Europe",
+      "North America",
+      "South America",
+      "Oceania"
+    )
+  ) +
+  scale_x_continuous(
+    breaks = seq(1950, 2025, by = 5),
+    limits = c(1950, 2035)
+  ) +
+  labs(
+    title = "Women's Political Empowerment Across Five Continents",
+    subtitle = "Population-weighted averages, 1950–2025",
+    x = "Year",
+    y = "Overall Political Empowerment Score",
+    color = "Continent",
+    size = 15
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold"),
+    legend.position = "bottom",
+    axis.title = element_text(size = 14),
+    axis.text = element_text(size = 11),
+    legend.text = element_text(size = 11),
+    axis.text.x = element_text(
+      angle = 45,
+      hjust = 1,
+      size = 15
+    )
+  )
+```
+
+# 4. Plots_Taiwan v.s. Asia
+
+```{r}
+WPE_taiwan_asia <- WPE_country_clean %>%
+  filter(
+    entity %in% c(
+      "Taiwan",
+      "Asia (population-weighted)"
+    ),
+    year >= 1950,
+    year <= 2025
+  )
+
+```
+
+```{r}
+View(WPE_taiwan_asia)
+```
+
+## 1) Overall Political Empowerment
+
+```{r}
+ggplot(
+  WPE_taiwan_asia,
+  aes(x = year, y = womens_political_empowerment_overall, color = entity)
+) +
+  geom_line(linewidth = 1) +
+  scale_color_manual(
+    values = c(
+      "Taiwan" = "firebrick",
+      "Asia (population-weighted)" = "#C49A00"
+    ),
+    breaks = c(
+      "Taiwan",
+      "Asia (population-weighted)"
+    ),
+    labels = c(
+      "Taiwan",
+      "Asia (population-weighted)"
+    )
+  ) +
+  scale_x_continuous(
+    breaks = seq(1950, 2025, by = 5),
+    limits = c(1950, 2025)
+  ) +
+  labs(
+    title = "Women's Political Empowerment: Taiwan vs. Asia",
+    x = "Year",
+    y = "Overall Political Empowerment Score",
+    color = "Region"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold"),
+    legend.position = "bottom"
+  )
+```
+
+## 2) Women's Civil Liberties
+
+```{r}
+ggplot(
+  WPE_taiwan_asia,
+  aes(x = year, y = womens_civil_liberties, color = entity)
+) +
+  geom_line(linewidth = 1) +
+  scale_color_manual(
+    values = c(
+      "Taiwan" = "firebrick",
+      "Asia (population-weighted)" = "#C49A00"
+    ),
+    labels = c(
+      "Taiwan",
+      "Asia (population-weighted)"
+    )
+  ) +
+  scale_x_continuous(
+    breaks = seq(1950, 2025, by = 5),
+    limits = c(1950, 2025)
+  ) +
+  labs(
+    title = "Women's Civil Liberties: Taiwan vs. Asia",
+    x = "Year",
+    y = "Women's Civil Liberties Score",
+    color = "Region"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold"),
+    legend.position = "bottom"
+  )
+```
+
+## 3) Women's Civil Society Participation
+
+```{r}
+ggplot(
+  WPE_taiwan_asia,
+  aes(x = year, y = womens_civil_society_participation, color = entity)
+) +
+  geom_line(linewidth = 1) +
+  scale_color_manual(
+    values = c(
+      "Taiwan" = "firebrick",
+      "Asia (population-weighted)" = "#C49A00"
+    ),
+    breaks = c(
+      "Taiwan",
+      "Asia (population-weighted)"
+    ),
+    labels = c(
+      "Taiwan",
+      "Asia (population-weighted)"
+    )
+  ) +
+  scale_x_continuous(
+    breaks = seq(1950, 2025, by = 5),
+    limits = c(1950, 2025)
+  ) +
+  labs(
+    title = "Women's Civil Society Participation: Taiwan vs. Asia",
+    x = "Year",
+    y = "Women's Civil Society Participation Score",
+    color = "Region"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold"),
+    legend.position = "bottom"
+  )
+```
+
+## 4) Women's Political Participation
+
+```{r}
+ggplot(
+  WPE_taiwan_asia,
+  aes(x = year, y = womens_political_participation, color = entity)
+) +
+  geom_line(linewidth = 1) +
+  scale_color_manual(
+    values = c(
+      "Taiwan" = "firebrick",
+      "Asia (population-weighted)" = "#C49A00"
+    ),
+    breaks = c(
+      "Taiwan",
+      "Asia (population-weighted)"
+    ),
+    labels = c(
+      "Taiwan",
+      "Asia (population-weighted)"
+    )
+  ) +
+  scale_x_continuous(
+    breaks = seq(1950, 2025, by = 5),
+    limits = c(1950, 2025)
+  ) +
+  labs(
+    title = "Women's Political Participation: Taiwan vs. Asia",
+    x = "Year",
+    y = "Women's Political Participation Score",
+    color = "Region"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold"),
+    legend.position = "bottom"
+  )
+```
+
+# 5. Plots_Taiwan v.s. Top 3 Asia
+
+## Overall Political Empowerment
+
+```{r}
+WPE_top_asia <- WPE_country_clean %>%
+  filter(
+    entity %in% c(
+      "Taiwan",
+      "South Korea",
+      "Japan",
+      "Philippines"
+    ),
+    year >= 1950,
+    year <= 2025
+  )
+
+```
+
+```{r}
+WPE_top_asia <- WPE_top_asia %>%
+  mutate(
+    entity = factor(
+      entity,
+      levels = c(
+        "Taiwan",
+        "South Korea",
+        "Japan",
+        "Philippines"
+      )
+    )
+  )
+```
+
+```{r}
+ggplot(
+  WPE_top_asia,
+  aes(x = year, y = womens_political_empowerment_overall, color = entity)
+) +
+  geom_line(linewidth = 1) +
+  scale_color_manual(
+    values = c(
+      "Taiwan" = "firebrick",
+      "South Korea" = "#00008B",
+      "Japan" = "#00CD00", 
+      "Philippines" = "#FFFF00"
+    ),
+    labels = c(
+      "Taiwan",
+      "South Korea",
+      "Japan",
+      "Philippines"
+    )
+  ) +
+  scale_x_continuous(
+    breaks = seq(1950, 2025, by = 5),
+    limits = c(1950, 2025)
+  ) +
+  labs(
+    title = "Women's Political Empowerment: Taiwan v.s. Top 3 Asian Countries",
+    x = "Year",
+    y = "Overall Political Empowerment Score",
+    color = "Country"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold"),
+    legend.position = "bottom"
+  )
+```
+
+## Women's Civil Liberties
+
+```{r}
+ggplot(
+  WPE_top_asia,
+  aes(x = year, y = womens_civil_liberties, color = entity)
+) +
+  geom_line(linewidth = 1) +
+  scale_color_manual(
+    values = c(
+      "Taiwan" = "firebrick",
+      "South Korea" = "#00008B",
+      "Japan" = "#00CD00", 
+      "Philippines" = "#FFFF00"
+    ),
+    labels = c(
+      "Taiwan",
+      "South Korea",
+      "Japan",
+      "Philippines"
+    )
+  ) +
+  scale_x_continuous(
+    breaks = seq(1950, 2025, by = 5),
+    limits = c(1950, 2025)
+  ) +
+  labs(
+    title = "Women's Civil Liberties: Taiwan v.s. Top 3 Asian Countries",
+    x = "Year",
+    y = "Women's Civil Liberties Score",
+    color = "Country"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold"),
+    legend.position = "bottom"
+  )
+```
+
+## Women's Civil Society Participation
+
+```{r}
+ggplot(
+  WPE_top_asia,
+  aes(x = year, y = womens_civil_society_participation, color = entity)
+) +
+  geom_line(linewidth = 1) +
+  scale_color_manual(
+    values = c(
+      "Taiwan" = "firebrick",
+      "South Korea" = "#00008B",
+      "Japan" = "#00CD00", 
+      "Philippines" = "#FFFF00"
+    ),
+    labels = c(
+      "Taiwan",
+      "South Korea",
+      "Japan",
+      "Philippines"
+    )
+  ) +
+  scale_x_continuous(
+    breaks = seq(1950, 2025, by = 5),
+    limits = c(1950, 2025)
+  ) +
+  labs(
+    title = "Women's Civil Society Participation: Taiwan v.s. Top 3 Asian Countries",
+    x = "Year",
+    y = "Women's Civil Society Participation Score",
+    color = "Country"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold"),
+    legend.position = "bottom"
+  )
+```
+
+## Women's Political Participation
+
+```{r}
+ggplot(
+  WPE_top_asia,
+  aes(x = year, y = womens_political_participation, color = entity)
+) +
+  geom_line(linewidth = 1) +
+  scale_color_manual(
+    values = c(
+      "Taiwan" = "firebrick",
+      "South Korea" = "#00008B",
+      "Japan" = "#00CD00", 
+      "Philippines" = "#FFFF00"
+    ),
+    labels = c(
+      "Taiwan",
+      "South Korea",
+      "Japan",
+      "Philippines"
+    )
+  ) +
+  scale_x_continuous(
+    breaks = seq(1950, 2025, by = 5),
+    limits = c(1950, 2025)
+  ) +
+  labs(
+    title = "Women's Political Participation: Taiwan v.s. Top 3 Asian Countries",
+    x = "Year",
+    y = "Women's Political Participation Score",
+    color = "Country"
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(face = "bold"),
+    legend.position = "bottom"
+  )
+```
